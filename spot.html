@@ -1,0 +1,21 @@
+<script type="text/javascript">
+    document.getElementById("ip").value = getSavedValue("ip");
+    document.getElementById("timefrom").value = getSavedValue("timefrom");
+    document.getElementById("timeto").value = getSavedValue("timeto");
+    document.getElementById("clones").value = getSavedValue("clones");
+    document.getElementById("songtimefrom").value = getSavedValue("songtimefrom");
+    document.getElementById("songtimeto").value = getSavedValue("songtimeto");
+
+    function saveValue(e){
+            var id = e.id;
+            var val = e.value;
+            localStorage.setItem(id, val);
+        }
+
+        function getSavedValue  (v){
+            if (!localStorage.getItem(v)) {
+                return "";
+            }
+            return localStorage.getItem(v);
+        }
+</script>
