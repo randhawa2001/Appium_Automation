@@ -1,21 +1,276 @@
 <script type="text/javascript">
-    document.getElementById("ip").value = getSavedValue("ip");
-    document.getElementById("timefrom").value = getSavedValue("timefrom");
-    document.getElementById("timeto").value = getSavedValue("timeto");
-    document.getElementById("clones").value = getSavedValue("clones");
-    document.getElementById("songtimefrom").value = getSavedValue("songtimefrom");
-    document.getElementById("songtimeto").value = getSavedValue("songtimeto");
-
-    function saveValue(e){
-            var id = e.id;
-            var val = e.value;
-            localStorage.setItem(id, val);
+    // Fetch and populate settings on page load
+    window.onload = async function () {
+      try {
+        const response = await fetch('/get-settings?');
+        if (!response.ok) {
+          throw new Error('Failed to fetch settings');
         }
-
-        function getSavedValue  (v){
-            if (!localStorage.getItem(v)) {
-                return "";
-            }
-            return localStorage.getItem(v);
+        const settings = await response.json();
+        if (
+          !settings.ip ||
+          !settings.timefrom ||
+          !settings.timeto ||
+          !settings.songtimefrom ||
+          !settings.songtimeto ||
+          !settings.inputType ||
+          !settings.clones ||
+          !settings.sleep_schedule.start ||
+          !settings.sleep_schedule.end ||
+          settings.skip_after_seconds === undefined ||
+          settings.pause_chance === undefined ||
+          settings.pause_min_duration === undefined ||
+          settings.pause_max_duration === undefined
+        ) {
+          alert('Some settings are missing. Redirecting to settings form...');
+          window.location.href = '/settings-form';
+          return;
         }
-</script>
+        document.getElementById('ip').value = settings.ip || '';
+        document.getElementById('timefrom').value = settings.timefrom || '';
+        document.getElementById('timeto').value = settings.timeto || '';
+        document.getElementById('songtimefrom').value =
+          settings.songtimefrom || '';
+        document.getElementById('songtimeto').value = settings.songtimeto || '';
+        document.getElementById('clones').value = settings.clones || '';
+        document.getElementById('inputType').value = settings.inputType || '';
+        document.getElementById('sleepStart').value =
+          settings.sleep_schedule.start || '';
+        document.getElementById('sleepEnd').value =
+          settings.sleep_schedule.end || '';
+        document.getElementById('skip_after_seconds').value =
+          settings.skip_after_seconds || 0;
+        document.getElementById('pause_chance').value =
+          settings.pause_chance || 0;
+        document.getElementById('pause_min_duration').value =
+          settings.pause_min_duration || 0;
+        document.getElementById('pause_max_duration').value =
+          settings.pause_max_duration || 0;
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        // print(error);
+        // alert('Failed to load settings. Please check the server connection.');
+      }
+    };
+  
+    // Save settings to MongoDB
+    // document.getElementById('spotifyForm').onsubmit = async function (event) {
+    //   event.preventDefault(); // Prevents the form from submitting immediately
+  
+    //   const settings = {
+    //     ip: document.getElementById('ip').value,
+    //     timefrom: document.getElementById('timefrom').value,
+    //     timeto: document.getElementById('timeto').value,
+    //     songtimefrom: document.getElementById('songtimefrom').value,
+    //     songtimeto: document.getElementById('songtimeto').value,
+    //     clones: document.getElementById('clones').value,
+    //     inputType: document.getElementById('inputType').value,
+    //     sleep_schedule: {
+    //       start: document.getElementById('sleepStart').value,
+    //       end: document.getElementById('sleepEnd').value,
+    //     },
+    //     skip_after_seconds:
+    //       parseInt(document.getElementById('skip_after_seconds').value, 10) || 0,
+    //     pause_chance:
+    //       parseInt(document.getElementById('pause_chance').value, 10) || 0,
+    //     pause_min_duration:
+    //       parseInt(document.getElementById('pause_min_duration').value, 10) || 0,
+    //     pause_max_duration:
+    //       parseInt(document.getElementById('pause_max_duration').value, 10) || 0,
+    //   };
+  
+    //   try {
+    //     const response = await fetch('/save-settings', {
+    //       method: 'POST',
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //       },
+    //       body: JSON.stringify(settings),
+    //     });
+  
+    //     if (!response.ok) {
+    //       throw new Error('Failed to save settings');
+    //     }
+  
+    //     alert('Settings saved successfully!');
+    //     event.target.submit(); // Submit the form after saving
+    //   } catch (error) {
+    //     console.error('Error saving settings:', error);
+    //     alert('Failed to save settings. Please check the server connection.');
+    //   }
+    // };
+  </script>
+  
+  <!-- Fetch Logs of specific device!! -->
+  
+  <h2>View Logs</h2>
+  <label for="deviceLogs">Select Device:</label>
+  <select id="deviceLogs" onchange="fetchDeviceLogs()">
+    <option value="">All Devices</option>
+    <!-- Populate this dynamically -->
+    <option value="device1_id">Device 1</option>
+    <option value="device2_id">Device 2</option>
+  </select>
+  
+  <div id="logsTable"></div>
+  
+  <script>
+    async function fetchDeviceLogs() {
+      const deviceId = document.getElementById('deviceLogs').value;
+  
+      try {
+        const response = await fetch(`/logs?device=${deviceId}`);
+        const logs = await response.json();
+  
+        // Clear existing table
+        const logsTable = document.getElementById('logsTable');
+        logsTable.innerHTML = '';
+  
+        if (logs.length === 0) {
+          logsTable.innerHTML = '<p>No logs available for this device.</p>';
+          return;
+        }
+  
+        // Create a table for logs
+        let tableHtml =
+          "<table border='1'><tr><th>Timestamp</th><th>Event Type</th><th>Message</th></tr>";
+        logs.forEach((log) => {
+          tableHtml += `<tr>
+                    <td>${log.timestamp}</td>
+                    <td>${log.event_type}</td>
+                    <td>${log.message}</td>
+                </tr>`;
+        });
+        tableHtml += '</table>';
+        logsTable.innerHTML = tableHtml;
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        document.getElementById('logsTable').innerHTML =
+          '<p>Error loading logs. Please try again later.</p>';
+      }
+    }
+  
+    async function populateDeviceDropdown() {
+      try {
+        const response = await fetch('/devices');
+        const devices = await response.json();
+  
+        const deviceDropdown = document.getElementById('deviceLogs');
+        deviceDropdown.innerHTML = '<option value="">All Devices</option>'; // Reset dropdown with default option
+  
+        devices.forEach((deviceId) => {
+          const option = document.createElement('option');
+          option.value = deviceId;
+          option.textContent = deviceId;
+          deviceDropdown.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+      }
+    }
+  
+    // Call this function on page load
+    window.onload = () => {
+      populateDeviceDropdown();
+      fetchDeviceLogs();
+    };
+  </script>
+  
+  <script>
+    async function handleDeviceChange(deviceId) {
+      if (!deviceId) return; // No selection, no API call
+  
+      try {
+        const response = await fetch(
+          `/get-settings?device=${encodeURIComponent(deviceId)}`
+        );
+        if (!response.ok) {
+          throw new Error('API call failed.');
+        }
+        const settings = await response.json();
+        if (
+          !settings.ip ||
+          !settings.timefrom ||
+          !settings.timeto ||
+          !settings.songtimefrom ||
+          !settings.songtimeto ||
+          !settings.inputType ||
+          !settings.clones ||
+          !settings.sleep_schedule.start ||
+          !settings.sleep_schedule.end ||
+          settings.skip_after_seconds === undefined ||
+          settings.pause_chance === undefined ||
+          settings.pause_min_duration === undefined ||
+          settings.pause_max_duration === undefined
+        ) {
+          alert('Some settings are missing. Redirecting to settings form...');
+          window.location.href = '/settings-form';
+          return;
+        }
+        document.getElementById('ip').value = settings.ip || '';
+        document.getElementById('timefrom').value = settings.timefrom || '';
+        document.getElementById('timeto').value = settings.timeto || '';
+        document.getElementById('songtimefrom').value =
+          settings.songtimefrom || '';
+        document.getElementById('songtimeto').value = settings.songtimeto || '';
+        document.getElementById('clones').value = settings.clones || '';
+        document.getElementById('inputType').value = settings.inputType || '';
+        document.getElementById('sleepStart').value =
+          settings.sleep_schedule.start || '';
+        document.getElementById('sleepEnd').value =
+          settings.sleep_schedule.end || '';
+        document.getElementById('skip_after_seconds').value =
+          settings.skip_after_seconds || 0;
+        document.getElementById('pause_chance').value =
+          settings.pause_chance || 0;
+        document.getElementById('pause_min_duration').value =
+          settings.pause_min_duration || 0;
+        document.getElementById('pause_max_duration').value =
+          settings.pause_max_duration || 0;
+        const data = await response.json();
+        console.log(data); // Handle the data or update the UI as needed
+  
+        // Example: Display response in a placeholder element
+        document.getElementById('deviceDetails').innerText = JSON.stringify(
+          data,
+          null,
+          2
+        );
+      } catch (error) {
+        console.error('Error fetching device info:', error);
+      }
+    }
+  </script>
+  <!-- <h2>Fetch Logs</h2>
+  <label for="deviceId">Device ID:</label>
+  <input type="text" id="deviceId" placeholder="Enter device ID" />
+  <button id="fetchLogsButton">View Logs</button>
+  
+  <script>
+    async function fetchLogs(deviceId) {
+      if (!deviceId) {
+        alert('Please enter a device ID.');
+        return;
+      }
+      try {
+        const response = await fetch(`/logs?device=${deviceId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch logs');
+        }
+        const logs = await response.json();
+        // Display logs in a user-friendly way
+        alert(`Logs for Device ${deviceId}:\n` + JSON.stringify(logs, null, 2));
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+        alert('Failed to fetch logs. Please check the server connection.');
+      }
+    }
+  
+    // Attach event listener
+    document.getElementById('fetchLogsButton').addEventListener('click', () => {
+      const deviceId = document.getElementById('deviceId').value;
+      fetchLogs(deviceId);
+    });
+  </script>
+   -->
+  
