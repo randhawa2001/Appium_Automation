@@ -8,6 +8,8 @@ selenium = "*"
 requests = "*"
 flask = "*"
 appium-python-client = "==2.7.1"
+psycopg2 = "*"
+pymongo = "*"
 
 [dev-packages]
 
