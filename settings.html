@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings Form</title>
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      console.log(urlParams.values())
+      const deviceId = urlParams.get('device_id');
+
+      if (!deviceId) {
+        alert('Device ID is required to load setttings.');
+      }
+      // Fetch existing settings and populate the form
+      async function loadSettings() {
+        try {
+          console.log('Fetching settings from server...');
+          // const response = await fetch(`/get-settings?device_id=${deviceId}`);
+          const response = await fetch(`/get-settings?device=${encodeURIComponent(deviceId)}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch settings.');
+          }
+
+          const settings = await response.json();
+          console.log('Settings fetched:', settings);
+
+          document.getElementById('ip').value = settings.ip || '';
+          document.getElementById('timefrom').value = settings.timefrom || '';
+          document.getElementById('timeto').value = settings.timeto || '';
+          document.getElementById('clones').value = settings.clones || '';
+          document.getElementById('songtimefrom').value =
+            settings.songtimefrom || '';
+          document.getElementById('songtimeto').value =
+            settings.songtimeto || '';
+          document.getElementById('inputType').value =
+            settings.inputType || 'Albums';
+          document.getElementById('skip_after_seconds').value =
+            settings.skip_after_seconds || 0;
+          document.getElementById('pause_chance').value =
+            settings.pause_chance || 0;
+          document.getElementById('pause_min_duration').value =
+            settings.pause_min_duration || 0;
+          document.getElementById('pause_max_duration').value =
+            settings.pause_max_duration || 0;
+          document.getElementById('sleepStart').value =
+            settings.sleep_schedule?.start || '';
+          document.getElementById('sleepEnd').value =
+            settings.sleep_schedule?.end || '';
+        } catch (error) {
+          alert('Error loading settings: ' + error.message);
+        }
+      }
+
+      // Save settings to the backend
+      async function saveSettings(event) {
+        event.preventDefault();
+
+        const settings = {
+          
+          ip: document.getElementById('ip').value,
+          timefrom: document.getElementById('timefrom').value,
+          timeto: document.getElementById('timeto').value,
+          clones: document.getElementById('clones').value,
+          songtimefrom: document.getElementById('songtimefrom').value,
+          songtimeto: document.getElementById('songtimeto').value,
+          inputType: document.getElementById('inputType').value,
+          skip_after_seconds:
+            parseInt(document.getElementById('skip_after_seconds').value) || 0,
+          pause_chance:
+            parseInt(document.getElementById('pause_chance').value) || 0,
+          pause_min_duration:
+            parseInt(document.getElementById('pause_min_duration').value) || 0,
+          pause_max_duration:
+            parseInt(document.getElementById('pause_max_duration').value) || 0,
+          sleep_schedule: {
+            start: document.getElementById('sleepStart').value,
+            end: document.getElementById('sleepEnd').value,
+          },
+        };
+
+        try {
+          const response = await fetch('/save-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings),
+          });
+
+          if (!response.ok) throw new Error('Failed to save settings.');
+
+          alert('Settings saved successfully!');
+          window.location.reload(); // Reload to show updated settings
+        } catch (error) {
+          alert('Error saving settings: ' + error.message);
+        }
+      }
+
+      // Load settings when the page is ready
+      window.onload = loadSettings;
+    </script>
+  </head>
+  <body>
+    <h1>Settings Form</h1>
+    <form onsubmit="saveSettings(event)">
+      <label for="ip">IP Address:</label>
+      <input type="text" id="ip" name="ip" required /><br /><br />
+
+      <label for="timefrom">Time From:</label>
+      <input type="number" id="timefrom" name="timefrom" required /><br /><br />
+
+      <label for="timeto">Time To:</label>
+      <input type="number" id="timeto" name="timeto" required /><br /><br />
+
+      <label for="clones">Clones:</label>
+      <textarea id="clones" name="clones" required></textarea><br /><br />
+
+      <label for="songtimefrom">Song Time From:</label>
+      <input
+        type="number"
+        id="songtimefrom"
+        name="songtimefrom"
+        required
+      /><br /><br />
+
+      <label for="songtimeto">Song Time To:</label>
+      <input
+        type="number"
+        id="songtimeto"
+        name="songtimeto"
+        required
+      /><br /><br />
+
+      <label for="inputType">Input Type:</label>
+      <select id="inputType" name="inputType" required>
+        <option value="Albums">Albums</option>
+        <option value="Playlists">Playlists</option>
+        <option value="Links">Links</option></select
+      ><br /><br />
+
+      <h3>Pause and Skip Options</h3>
+      <label for="skip_after_seconds">Skip Song After (Seconds):</label>
+      <input
+        type="number"
+        id="skip_after_seconds"
+        name="skip_after_seconds"
+        required
+      /><br /><br />
+
+      <label for="pause_chance">Pause Chance (%):</label>
+      <input
+        type="number"
+        id="pause_chance"
+        name="pause_chance"
+        required
+      /><br /><br />
+
+      <label for="pause_min_duration">Pause Min Duration (Seconds):</label>
+      <input
+        type="number"
+        id="pause_min_duration"
+        name="pause_min_duration"
+        required
+      /><br /><br />
+
+      <label for="pause_max_duration">Pause Max Duration (Seconds):</label>
+      <input
+        type="number"
+        id="pause_max_duration"
+        name="pause_max_duration"
+        required
+      /><br /><br />
+
+      <h3>Sleep Schedule</h3>
+      <label for="sleepStart">Sleep Start Time:</label>
+      <input type="time" id="sleepStart" name="sleepStart" /><br /><br />
+
+      <label for="sleepEnd">Sleep End Time:</label>
+      <input type="time" id="sleepEnd" name="sleepEnd" /><br /><br />
+
+      <button type="submit">Save Settings</button>
+    </form>
+  </body>
+</html>
