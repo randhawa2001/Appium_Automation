@@ -159,14 +159,14 @@ def rotateIP():
 
 
 desired_caps = {
-    "xcodeOrgId": "52AUC7UKFT",
-    "xcodeSigningId": "iPhone Developer",
-    "platformName": "iOS",
-    "automationName": "XCUITest",
+    "xcodeOrgId": "",
+    "xcodeSigningId": "",
+    "platformName": "",
+    "automationName": "",
     "udid": sys.argv[1],
     "deviceName": "iPhone",
     "bundleId": "com.spotify.client",
-    "updatedWDABundleID": "BotiPhone.BotiPhone.WebDriverAgentRunner",
+    "updatedWDABundleID": "",
     "showXcodeLog": True,
     "newCommandTimeout": "1000",
     "useNewWDA": True,
